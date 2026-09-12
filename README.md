@@ -6,12 +6,13 @@ of the client bundle.
 
 ## Run locally
 
-1. Copy `.env.example` to `.env` and set `IVY_API_KEY` to the issued key.
+1. Copy `.env.example` to `.env` and set `IVY_API_KEY` to the issued key. To enable listing-image uploads, also set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` from your Cloudinary dashboard.
 2. Run `npm install`, `npm install --prefix backend`, and `npm install --prefix frontend`.
 3. Run `npm run dev`, then open `http://localhost:5173`.
 
 The provided demo users can sign in. The browser retains the API session in
 local storage; the server forwards the token and API key on every request.
+Cloudinary uploads use a short-lived server-generated signature, so the API secret never reaches the browser.
 
 ## What was checked
 

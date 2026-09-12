@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
+import crypto from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -33,6 +34,18 @@ app.post('/api/auth/refresh', (req, res) => forward(req, res, '/auth/refresh', {
   method: 'POST', headers: apiHeaders(req, { 'Content-Type': 'application/json' }), body: JSON.stringify(req.body)
 }));
 app.post('/api/auth/logout', (req, res) => forward(req, res, '/auth/logout', { method: 'POST', headers: apiHeaders(req) }));
+app.post('/api/uploads/signature', (req, res) => {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const cloudinaryKey = process.env.CLOUDINARY_API_KEY;
+  const cloudinarySecret = process.env.CLOUDINARY_API_SECRET;
+  if (!req.headers.authorization) return res.status(401).json({ detail: 'Sign in before uploading an image.' });
+  if (!cloudName || !cloudinaryKey || !cloudinarySecret) return res.status(500).json({ detail: 'Server is missing Cloudinary configuration.' });
+
+  const timestamp = Math.floor(Date.now() / 1000);
+  const folder = 'ivy-homes/listings';
+  const signature = crypto.createHash('sha1').update(`folder=${folder}&timestamp=${timestamp}${cloudinarySecret}`).digest('hex');
+  res.json({ cloud_name: cloudName, api_key: cloudinaryKey, timestamp, folder, signature });
+});
 app.all('/api/*', (req, res) => {
   const endpoint = req.params[0];
   const query = new URLSearchParams(req.query).toString();

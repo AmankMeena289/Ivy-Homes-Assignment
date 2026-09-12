@@ -34,3 +34,20 @@ export async function request(path, options = {}, retried = false) {
   if (!response.ok) throw new Error(Array.isArray(data.detail) ? data.detail.map(x => x.msg).join(', ') : data.detail || 'Request failed');
   return data;
 }
+
+export async function uploadImage(file) {
+  if (!file?.type.startsWith('image/')) throw new Error('Please choose an image file.');
+  if (file.size > 10 * 1024 * 1024) throw new Error('Images must be 10 MB or smaller.');
+
+  const credentials = await request('uploads/signature', { method: 'POST' });
+  const form = new FormData();
+  form.append('file', file);
+  form.append('api_key', credentials.api_key);
+  form.append('timestamp', String(credentials.timestamp));
+  form.append('folder', credentials.folder);
+  form.append('signature', credentials.signature);
+  const response = await fetch(`https://api.cloudinary.com/v1_1/${credentials.cloud_name}/image/upload`, { method: 'POST', body: form });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error?.message || 'Image upload failed.');
+  return data.secure_url;
+}

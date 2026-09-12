@@ -1,0 +1,11 @@
+.image-upload {
+  border: 1px solid #e1e4dc;
+  border-radius: 12px;
+  max-width: 700px;
+  padding: 24px;
+}
+
+.image-upload h3 { font: 600 24px 'Playfair Display'; margin-top: 0; }
+.image-upload img { display: block; margin: 14px 0; max-height: 360px; max-width: 100%; object-fit: cover; border-radius: 8px; }
+.upload-control { background: #1f4d3f; border-radius: 8px; color: #fff; cursor: pointer; display: inline-block; padding: 11px 17px; }
+.upload-control input { display: none; }
