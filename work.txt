@@ -1,0 +1,29 @@
+Hi Aman Kumar Meena,
+
+Thanks for registering for the Ivy Homes internship assignment.
+
+Start with the problem statement (statement.md, attached). The API reference and a submission template are attached too.
+
+Your details
+
+Base URL	https://solve.ivy.homes
+API key	IVY26-4431A4B9BD98
+City	Hyderabad
+Assigned locality	Kukatpally (question 5 asks about it)
+Demo accounts
+
+The frontend you build must let these three accounts log in. They all use the same password.
+
+Users	demo1@ivy.homes, demo2@ivy.homes, demo3@ivy.homes
+Password	3142821b33
+Submission
+
+Submit here	https://forms.gle/e8L79HaN3MbJJact7
+Deadline	23:59 IST on Monday 14 September 2026
+Please note
+
+Your API key is yours alone. It decides your city and your correct answers, so sharing it helps nobody and disqualifies both of you.
+Keep this email. If you lose it, register again and we will re-send the same key.
+Something broken? If it is genuinely broken, not just undocumented, email vivek@ivy.homes.
+All the best!
+Team Ivy Homes
