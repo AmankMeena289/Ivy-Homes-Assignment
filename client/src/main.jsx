@@ -4,10 +4,21 @@ import './styles.css';
 
 const sessionKey = 'ivy-session';
 const getSession = () => JSON.parse(localStorage.getItem(sessionKey) || 'null');
-async function request(path, options = {}) {
+async function refreshSession(session) {
+  const response = await fetch('/api/auth/refresh', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh_token: session.refresh_token }) });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.access_token) throw new Error(data.detail || 'Your session has expired. Please sign in again.');
+  localStorage.setItem(sessionKey, JSON.stringify(data));
+  return data;
+}
+async function request(path, options = {}, retried = false) {
   const session = getSession();
   const response = await fetch(`/api/${path}`, { ...options, headers: { 'Content-Type': 'application/json', ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}), ...options.headers } });
   const data = await response.json().catch(() => ({}));
+  if (response.status === 401 && session?.refresh_token && !retried) {
+    await refreshSession(session);
+    return request(path, options, true);
+  }
   if (!response.ok) throw new Error(Array.isArray(data.detail) ? data.detail.map(x => x.msg).join(', ') : data.detail || 'Request failed');
   return data;
 }
@@ -23,7 +34,7 @@ function Card({ item, onOpen, saved, onSave }) { return <article className="card
 function Browse({ kind, saved, onSave, onOpen }) {
   const [data, setData] = useState({ results: [], total: 0, has_more: false }), [loading, setLoading] = useState(true), [error, setError] = useState(''), [filters, setFilters] = useState({ locality: '', bedroom: '', furnishing: '', min_price: '', max_price: '' }), [offset, setOffset] = useState(0);
   const title = kind === 'listings' ? 'Homes for sale' : kind === 'rentals' ? 'Homes for rent' : 'New projects';
-  useEffect(() => { let ignore = false; setLoading(true); const q = new URLSearchParams({ limit: '12', offset: String(offset) }); Object.entries(filters).forEach(([k, v]) => v && q.set(k === 'bedroom' ? 'bhk' : k, v)); request(`${kind}?${q}`).then(x => { if (ignore) return; const results = (x.results || []).filter(item => (!filters.furnishing || item.furnishing === filters.furnishing) && (!filters.min_price || item.price >= Number(filters.min_price)) && (!filters.max_price || item.price <= Number(filters.max_price))); setData({ ...x, results }); }).catch(e => !ignore && setError(e.message)).finally(() => !ignore && setLoading(false)); return () => { ignore = true; }; }, [kind, offset, JSON.stringify(filters)]);
+  useEffect(() => { let ignore = false; async function load() { setLoading(true); setError(''); const serverQuery = new URLSearchParams(); if (filters.locality) serverQuery.set('locality', filters.locality); if (filters.bedroom) serverQuery.set('bhk', filters.bedroom); const needsLocalFiltering = Boolean(filters.furnishing || filters.min_price || filters.max_price); try { if (!needsLocalFiltering) { serverQuery.set('limit', '12'); serverQuery.set('offset', String(offset)); const page = await request(`${kind}?${serverQuery}`); if (!ignore) setData(page); return; } const all = []; let apiOffset = 0; while (true) { const query = new URLSearchParams(serverQuery); query.set('limit', '50'); query.set('offset', String(apiOffset)); const page = await request(`${kind}?${query}`); all.push(...(page.results || [])); if (!page.has_more) break; apiOffset += page.count; } const filtered = all.filter(item => (!filters.furnishing || item.furnishing === filters.furnishing) && (!filters.min_price || item.price >= Number(filters.min_price)) && (!filters.max_price || item.price <= Number(filters.max_price))); if (!ignore) setData({ results: filtered.slice(offset, offset + 12), total: filtered.length, has_more: offset + 12 < filtered.length }); } catch (e) { if (!ignore) setError(e.message); } finally { if (!ignore) setLoading(false); } } load(); return () => { ignore = true; }; }, [kind, offset, JSON.stringify(filters)]);
   function change(key, value) { setOffset(0); setFilters({ ...filters, [key]: value }); }
   return <><section className="hero"><span className="eyebrow">DISCOVER</span><h2>{title}</h2><p>{data.total?.toLocaleString('en-IN') || '…'} opportunities, chosen for you.</p></section>{kind !== 'projects' && <section className="filters"><input placeholder="Locality" value={filters.locality} onChange={e => change('locality', e.target.value)} /><select value={filters.bedroom} onChange={e => change('bedroom', e.target.value)}><option value="">Any BHK</option>{[1,2,3,4,5].map(n => <option key={n} value={n}>{n} BHK</option>)}</select><select value={filters.furnishing} onChange={e => change('furnishing', e.target.value)}><option value="">Any furnishing</option><option>unfurnished</option><option>semi-furnished</option><option>fully-furnished</option></select><input type="number" placeholder="Min price" value={filters.min_price} onChange={e => change('min_price', e.target.value)} /><input type="number" placeholder="Max price" value={filters.max_price} onChange={e => change('max_price', e.target.value)} /></section>}{error ? <p className="error">{error}</p> : loading ? <p className="loading">Loading homes…</p> : <><section className="grid">{data.results.map(item => kind === 'projects' ? <article className="card project" key={item.project_id}><div className="photo"><span>{item.project_status}</span></div><div className="card-body"><p className="muted">{item.locality}</p><h3>{item.apartment_name}</h3><strong>{money(item.price_min)} – {money(item.price_max)}</strong><p>{area(item.min_area_sqft)} – {area(item.max_area_sqft)}</p><p>{item.total_units} homes · {item.developer_name}</p></div></article> : <Card key={item.listing_id} item={item} saved={saved.includes(item.listing_id)} onSave={onSave} onOpen={onOpen} />)}</section><div className="pager"><button disabled={!offset} onClick={() => setOffset(Math.max(0, offset - 12))}>← Previous</button><span>{offset + 1}–{Math.min(offset + 12, data.total)} of {data.total}</span><button disabled={!data.has_more} onClick={() => setOffset(offset + 12)}>Next →</button></div></>}</>;
 }
