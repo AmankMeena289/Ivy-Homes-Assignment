@@ -7,7 +7,7 @@ of the client bundle.
 ## Run locally
 
 1. Copy `.env.example` to `.env` and set `IVY_API_KEY` to the issued key.
-2. Run `npm install`, `npm install --prefix server`, and `npm install --prefix client`.
+2. Run `npm install`, `npm install --prefix backend`, and `npm install --prefix frontend`.
 3. Run `npm run dev`, then open `http://localhost:5173`.
 
 The provided demo users can sign in. The browser retains the API session in
