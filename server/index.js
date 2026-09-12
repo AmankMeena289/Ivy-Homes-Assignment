@@ -1,9 +1,11 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+const serverDirectory = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(serverDirectory, '../.env') });
 const app = express();
 const baseUrl = process.env.IVY_API_BASE_URL || 'https://solve.ivy.homes';
 const apiKey = process.env.IVY_API_KEY;
@@ -40,7 +42,7 @@ app.all('/api/*', (req, res) => {
   });
 });
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../client/dist');
+const root = path.resolve(serverDirectory, '../client/dist');
 app.use(express.static(root));
 app.get('*', (_, res) => res.sendFile(path.join(root, 'index.html')));
 app.listen(process.env.PORT || 5174, () => console.log(`Ivy Homes server on ${process.env.PORT || 5174}`));
