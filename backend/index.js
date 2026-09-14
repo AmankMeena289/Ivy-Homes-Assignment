@@ -58,4 +58,8 @@ app.all('/api/*', (req, res) => {
 const root = path.resolve(serverDirectory, '../frontend/dist');
 app.use(express.static(root));
 app.get('*', (_, res) => res.sendFile(path.join(root, 'index.html')));
-app.listen(process.env.PORT || 5174, () => console.log(`Ivy Homes server on ${process.env.PORT || 5174}`));
+if (!process.env.VERCEL) {
+  app.listen(process.env.PORT || 5174, () => console.log(`Ivy Homes server on ${process.env.PORT || 5174}`));
+}
+
+export default app;
