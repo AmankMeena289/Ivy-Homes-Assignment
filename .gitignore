@@ -6,4 +6,4 @@ data/
 .vercel/
 backend/.vercel/
 frontend/.vercel/
-api/
+/api/
